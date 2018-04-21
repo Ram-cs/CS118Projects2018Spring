@@ -99,22 +99,16 @@ int main(int argc, char *argv[])
     }
 
   // Fix "%20" to " " (The browser interprets a space as "%20")
-   for (int i = 0; fileName[i] != '\0'; i++)
+  for (int i = 0; fileName[i] != '\0'; )
     {
       if (fileName[i] == '%' && fileName[i+1] == '2' && fileName[i+2] == '0')
         {
           fileName[i] = ' ';
-          fileName[i+1] = ' ';
-          fileName[i+2] = ' ';
-        }
-    }
-
-  // Remove spaces from the file name string.
-   for (int i = 0; fileName[i] != '\0'; )
-    {
-      if (fileName[i] == ' ')
-        {
-          for (int j = i; fileName[j] != '\0'; j++)
+          for (int j = i+1; fileName[j] != '\0'; j++)
+            {
+              fileName[j] = fileName[j+1];
+            }
+          for (int j = i+1; fileName[j] != '\0'; j++)
             {
               fileName[j] = fileName[j+1];
             }
@@ -123,6 +117,7 @@ int main(int argc, char *argv[])
         i++;
     }
 
+  
   // Make all alphabet characters lowercase.
    for (int i = 0; fileName[i] != '\0'; i++)
     {
