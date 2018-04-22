@@ -70,10 +70,5 @@ int main(int argc, char *argv[])
 
 
 
-sadfhasfkhaskdhflkhalkshdf
-sdahfhaslkdhfkljhasdkhflkhasdkf
-sadjfjasdjhfkjlashdklfhlasdhflk
-sadfjasdgjfgj
-
 
 

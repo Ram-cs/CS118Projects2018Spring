@@ -44,9 +44,16 @@ int main(int argc, char *argv[])
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR on binding");
 
-    listen(sockfd, 5);  // 5 simultaneous connection at most
+    if(listen(sockfd, 5) == 0) { // 5 simultaneous connection at most
+        printf("Listening ...\n");
+    } else {
+        printf("[-] Error in binding\n");
+    }
 
     //accept connections
+    while (1) {
+        
+    
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
     if (newsockfd < 0)
@@ -65,9 +72,11 @@ int main(int argc, char *argv[])
     //reply to client
     n = write(newsockfd, "I got your message", 18);
     if (n < 0) error("ERROR writing to socket");
-
-    close(newsockfd);  // close connection
+        close(newsockfd);  // close connection
+    }
     close(sockfd);
-
+    
     return 0;
+        
+    
 }
