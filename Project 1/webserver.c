@@ -16,16 +16,19 @@
 #include <fcntl.h>
 
 //DEFINE CONTENT TYPE FOR HTTP
+
 #define TEXT "Content-Type: text/plain\r\n"
 #define HTML "Content-Type: text/html\r\n"
 #define JPG "Content-Type: image/jpeg\r\n"
 #define JPEG "Content-Type: image/jpeg\r\n"
 #define GIF "Content-Type: image/gif\r\n"
-//
+#define BIN "Content-Type: application/octet-stream\r\n"
+
 //DEFINE STATUS
+
 #define STATUS_OK "HTTP/1.1 200 OK\r\n"
 #define HTTP_STATUS_NOT_FOUND "HTTP/1.1 404 Not Found\r\n"
-#define FOUR_O_FOUR_NOT_FOUND "404 Not Found"
+#define FOUR_O_FOUR_NOT_FOUND "\r\n <html> <body> <h1> 404 Not Found </h1> </body> </html>"
 #define DEFAULT_CONTENT_LENGTH "Content-Length: 342\r\n"
 
 void error(char *msg)
@@ -34,6 +37,10 @@ void error(char *msg)
     exit(1);
 }
 
+
+int flag = 1;
+
+int i = 0;
 int main(int argc, char *argv[])
 {
     int sockfd, newsockfd, portno;
@@ -59,13 +66,12 @@ int main(int argc, char *argv[])
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR on binding");
     
-    if(listen(sockfd, 5) == 0) { // 5 simultaneous connection at most
-        printf("Server Listening ...\n");
-    } else {
-        printf("[-] Error in binding\n");
-    }
-    
     while (1) {
+        if (listen(sockfd, 5) == 0) { // 5 simultaneous connection at most
+            printf("Server Listening ...\n");
+        } else {
+            printf("[-] Error in binding\n");
+        }
         //accept connections
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
         
@@ -80,7 +86,7 @@ int main(int argc, char *argv[])
         //read client's message
         n = read(newsockfd, buffer, 1023);
         if (n < 0) error("ERROR reading from socket");
-        printf("Received Message: %s\n", buffer);
+        printf("%s\n", buffer);
         
         long sizeOfMessage = strlen(buffer);
         
@@ -152,7 +158,7 @@ int main(int argc, char *argv[])
         }
         
         //============ GETTING FILE EXTeNSION ============
-        char fileType[10];
+        char fileType[10] = "bin\0"; // binary is default.
         for (int i = 0; fileName[i] != '\0'; i++)
         {
             if (fileName[i] == '.')
@@ -162,6 +168,7 @@ int main(int argc, char *argv[])
                 {
                     fileType[k] = fileName[j];
                 }
+                fileType[k] = '\0';
                 break;
             }
         }
@@ -173,60 +180,79 @@ int main(int argc, char *argv[])
         
         
         // Open the file so we can verify that it exists in our current directory.
-        FILE *fp = fopen(fileName,"r");
+        //FILE *fp = fopen(fileName,"r");
+        int fd = open(fileName, O_RDONLY);
         //IF file can not open means we don't have file then send "404 file not found" error
-        if(fp <= 0) {
-            write(newsockfd, HTTP_STATUS_NOT_FOUND, 30);
-            write(newsockfd, DEFAULT_CONTENT_LENGTH, 30);
-            write(newsockfd, TEXT, 30);
-            write(newsockfd, FOUR_O_FOUR_NOT_FOUND, 30);
+        if(fd <= 0) {
+            write(newsockfd, HTTP_STATUS_NOT_FOUND, 24);
+            write(newsockfd, DEFAULT_CONTENT_LENGTH, 21);
+            write(newsockfd, HTML, 25);
+            write(newsockfd, FOUR_O_FOUR_NOT_FOUND,57);
+            write(newsockfd, "\r\n", 2);
             close(newsockfd); //close client socket
             
         } else { //conforming requested file is in our directory
+            
             printf("FILE OPENED FINE\n");
-            //==========================HTML RESPONSE ===================
-            // Support file extensions: *.html, *.htm, and *.txt *.jpg, *.jpeg, and *.gif
-            //find the right extension of the file, and write HTTP appropriatly
-            if (strcmp(fileType, "html") == 0) {
-                //reply to client
-                n = write(newsockfd, HTML, 30);
-            } else if (strcmp(fileType, "htm") == 0) {
-                n = write(newsockfd, HTML, 30);
-            } else if (strcmp(fileType, "jpeg") == 0) {
-                n = write(newsockfd, JPEG, 30);
-            } else if (strcmp(fileType, "jpg") == 0) {
-                n = write(newsockfd, JPG, 30);
-            } else if (strcmp(fileType, "gif") == 0) {
-                n = write(newsockfd, GIF, 30);
-            } else {
-                n = write(newsockfd, FOUR_O_FOUR_NOT_FOUND, 30);
+            char fileBuffer[100000000];
+            FILE *fp = fopen(fileName,"r");
+            
+            fseek(fp, 0 , SEEK_END);
+            long fileSize = ftell(fp);
+            fseek(fp, 0 , SEEK_SET);
+            
+            char buffer [50];
+            
+            
+            sprintf(buffer, "Content-Length: %ld", fileSize);
+            
+            int count = 0;
+            long size = fileSize;
+            
+            while (size > 0) {
+                size = size/ 10;
+                count++;
             }
             
+            //==========================HTML RESPONSE ===================
+            n = write(newsockfd, STATUS_OK, 17);
+            // Support file extensions: *.html, *.htm, and *.txt *.jpg, *.jpeg, and *.gif
+            //find the right extension of the file, and write HTTP appropriatly
+            
+            n = write(newsockfd, buffer, 18 + count);
+            write(newsockfd, "\r\n", 2);
+            if (strcmp(fileType, "html") == 0) {
+                //reply to client
+                n = write(newsockfd, HTML, 25);
+            } else if (strcmp(fileType, "htm") == 0) {
+                n = write(newsockfd, HTML, 25);
+            } else if (strcmp(fileType, "txt") == 0) {
+                n = write(newsockfd, TEXT, 26);
+            } else if (strcmp(fileType, "jpeg") == 0) {
+                n = write(newsockfd, JPEG, 26);
+            } else if (strcmp(fileType, "jpg") == 0) {
+                n = write(newsockfd, JPG, 26);
+            } else if (strcmp(fileType, "gif") == 0) {
+                n = write(newsockfd, GIF, 25);
+            } else if (strcmp(fileType, "bin") == 0) {
+                n = write(newsockfd, BIN, 40);
+            } else {
+                n = write(newsockfd, FOUR_O_FOUR_NOT_FOUND, 13);
+            }
+            
+            write(newsockfd, "\r\n", 2);
             if (n < 0) error("ERROR writing to socket"); //if we can not write file to client
             
             //Once we send the extension to client socket, send the real file now
-            //to send the real file we need to find the size of file https://stackoverflow.com/questions/35390912/proper-way-to-get-file-size-in-c
-            fseek(fp, 0 , SEEK_END);
-            long fileSize = ftell(fp);
-            fseek(fp, 0 , SEEK_SET);// needed for next read from beginning of file
+            // Send the file back to the client browser.
             
-            
-            
-            //sending the real file using "fwrite" or "send" or.... method
-            //https://stackoverflow.com/questions/11952898/c-send-and-receive-file
-            
-            
-            
+            read(fd, fileBuffer, fileSize);
+            write(newsockfd, fileBuffer, fileSize);
             
             close(newsockfd);  // close client socket after done with response
             
         }
         
     }
-    
 }
-
-
-
-
 
