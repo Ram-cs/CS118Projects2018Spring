@@ -194,7 +194,8 @@ int main(int argc, char *argv[])
         } else { //conforming requested file is in our directory
             
             printf("FILE OPENED FINE\n");
-            char fileBuffer[100000000];
+            char* fileBuffer = (char*) malloc(100000000);
+            //            char fileBuffer[1000000];
             FILE *fp = fopen(fileName,"r");
             
             fseek(fp, 0 , SEEK_END);
@@ -248,7 +249,7 @@ int main(int argc, char *argv[])
             
             read(fd, fileBuffer, fileSize);
             write(newsockfd, fileBuffer, fileSize);
-            
+            free(fileBuffer);
             close(newsockfd);  // close client socket after done with response
             
         }

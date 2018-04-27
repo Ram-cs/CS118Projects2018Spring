@@ -1,18 +1,15 @@
 CC=gcc
 CPPFLAGS=-g -Wall
-USERID=123456789
+USERID=604841556
 CLASSES=
 
-all: server client
+all: webserver
 
-server: $(CLASSES)
-	$(CC) -o $@ $^ $(CPPFLAGS) $@.c
-
-client: $(CLASSES)
+webserver: $(CLASSES)
 	$(CC) -o $@ $^ $(CPPFLAGS) $@.c
 
 clean:
-	rm -rf *.o *~ *.gch *.swp *.dSYM server client *.tar.gz
+	rm -rf *.o *~ *.gch *.swp *.dSYM webserver *.tar.gz
 
 dist: tarball
 
