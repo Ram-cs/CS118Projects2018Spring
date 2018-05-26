@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
     
     if (fd != NULL) { //check if the file is empty
         // read up to sizeof(buffer) bytes
-        while ((byte_read = fread(buffer, 1, sizeof(buffer), fd)) > 0)
+        while ((byte_read = fread(buffer, 1, 19, fd)) > 0)
         {
             // process bytesRead worth of data in buffer
             printf("Sending packet DATA:: %s\n", buffer);
