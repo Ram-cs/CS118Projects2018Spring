@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
     Request_Packet.SYN = 0;
     Request_Packet.FIN = 0;
     //Request_Packet.payload = filename;
+    printf("Filename: %s\n", argv[3]);
     strcpy(Request_Packet.payload, argv[3]);
 
     printf("The client sends a request with filename: %s\n", Request_Packet.payload);

@@ -37,7 +37,7 @@ typedef struct
   int ackNum;
   int SYN;
   int FIN;
-  char payload[100];
+  char *payload;
 } TCP_Packet;
 
 /*

@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
     // Wait for the final (request) packet in the 3-way handshake
     TCP_Packet * Request_Packet = malloc(sizeof(TCP_Packet) + 1024);
-    n = recvfrom(sockfd, Request_Packet, sizeof(*Request_Packet) + 1024, 0, (struct sockaddr *) &clientaddr, &clientlen);
+    n = recvfrom(sockfd, Request_Packet, sizeof(*Request_Packet), 0, (struct sockaddr *) &clientaddr, &clientlen);
   
     printf("Received Packet with seq num: %d\n", Request_Packet->seqNum);
     printf("Received Packet with filename: %s\n", Request_Packet->payload);
