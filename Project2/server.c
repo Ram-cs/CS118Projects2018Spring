@@ -35,9 +35,39 @@ int main(int argc, char **argv) {
     // Get a UDP packet (datagram), then echo it.
     struct sockaddr_in clientaddr;
     socklen_t clientlen = sizeof(clientaddr); // Byte size of client's address
+    int n; // Buffer size for the message
+    
+    // Wait for a SYN packet from the client.
+    TCP_Packet * SYN_Packet = malloc(sizeof(TCP_Packet));
+    n = recvfrom(sockfd, SYN_Packet, sizeof(*SYN_Packet), 0, (struct sockaddr *) &clientaddr, &clientlen);
+
+    printf("Received SYN with seq num: %d\n", SYN_Packet->seqNum);
+
+    // Create a SYNACK packet.
+    TCP_Packet SYNACK_Packet;
+    SYNACK_Packet.seqNum = 10240;
+    SYNACK_Packet.ackNum = SYN_Packet->seqNum + 1024;
+    SYNACK_Packet.SYN = 1;
+    SYNACK_Packet.FIN = 0;
+
+    // Then send it to the client.
+    n = sendto(sockfd, (struct TCP_Packet *) &SYNACK_Packet, sizeof(SYNACK_Packet), 0, (struct sockaddr *) &clientaddr, clientlen);
+    if (n < 0) {
+      perror("sendto did not work");
+      exit(0);
+    }
+
+    // Wait for the final (request) packet in the 3-way handshake
+    TCP_Packet * Request_Packet = malloc(sizeof(TCP_Packet) + 1024);
+    n = recvfrom(sockfd, Request_Packet, sizeof(*Request_Packet), 0, (struct sockaddr *) &clientaddr, &clientlen);
+  
+    printf("Received Packet with seq num: %d\n", Request_Packet->seqNum);
+    printf("Received Packet with filename: %s\n", Request_Packet->payload);
+
+
+    /*
     int BUFSIZE = 1024;
     char buf[BUFSIZE]; // Buffer for the message
-    int n; // Buffer size for the message
     
     struct hostent *hostp; // information about the client host
     char *hostaddrp; // Dotted decimal host address string
@@ -75,4 +105,6 @@ int main(int argc, char **argv) {
             exit(1);
         }
     }
+    */
+    return 0;
 }

@@ -17,18 +17,25 @@
 #include <arpa/inet.h>
 
 
-#define MAX_SEQ_NUM 30720
-#define MAX_PKT_LENGTH 1024
-#define TIMEOUT 500
-#define WND_SIZE 5120
+//#define MAX_SEQ_NUM 30720
+//#define MAX_PKT_LENGTH 1024
+//#define TIMEOUT 500
+//#define WND_SIZE 5120
 
 
-#define SYN 1
-#define STATUS 2
-#define DATA 3
-#define ACK 4
-#define FIN 5
+//#define SYN 1
+//#define STATUS 2
+//#define DATA 3
+//#define ACK 4
+//#define FIN 5
 
-
+typedef struct
+{
+  int seqNum;
+  int ackNum;
+  int SYN;
+  int FIN;
+  char *payload;
+} TCP_Packet;
 
 #endif /* support_h */
