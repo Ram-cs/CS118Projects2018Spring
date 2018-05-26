@@ -1,3 +1,5 @@
+
+
 #ifndef support_h
 #define support_h
 //CLIENT
@@ -15,5 +17,18 @@
 #include <arpa/inet.h>
 
 
-#endif /* support_h */
+#define MAX_SEQ_NUM 30720
+#define MAX_PKT_LENGTH 1024
+#define TIMEOUT 500
+#define WND_SIZE 5120
 
+
+#define SYN 1
+#define STATUS 2
+#define DATA 3
+#define ACK 4
+#define FIN 5
+
+
+
+#endif /* support_h */
