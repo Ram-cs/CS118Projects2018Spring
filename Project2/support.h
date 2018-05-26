@@ -18,12 +18,15 @@
 
 #include <sys/timeb.h>  // timestamp in millisecond
 
-/*
-#define MAX_SEQ_NUM 30720;
-#define MAX_PKT_LENGTH 1024;
-#define TIMEOUT 500;
-#define WND_SIZE 5120;
-*/
+
+#define MAX_SEQ_NUM 30720
+#define MAX_PKT_LENGTH 1024
+#define TIMEOUT 500
+#define WND_SIZE 5120
+#define NUM_PKG 10 //number of package allowed to send
+
+
+
 
 //#define SYN 1
 //#define STATUS 2
@@ -33,19 +36,19 @@
 
 typedef struct
 {
-  int seqNum;
-  int ackNum;
-  int SYN;
-  int FIN;
-  char payload[100];
+    int seqNum;
+    int ackNum;
+    int SYN;
+    int FIN;
+    char payload[MAX_PKT_LENGTH];
 } TCP_Packet;
 
 /*
-#define MAX_SEQ_NUM 30720;
-#define MAX_PKT_LENGTH 1024;
-#define TIMEOUT 500;
-#define WND_SIZE 5120;
-*/
+ #define MAX_SEQ_NUM 30720;
+ #define MAX_PKT_LENGTH 1024;
+ #define TIMEOUT 500;
+ #define WND_SIZE 5120;
+ */
 
 //#define SYN 1
 //#define STATUS 2
@@ -53,7 +56,7 @@ typedef struct
 //#define ACK 4
 //#define FIN 5
 
-/*
+
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
@@ -68,27 +71,27 @@ void error(const char* error_message) {
     exit(1);
 }
 
-
-//GET SYSTEM TIMESTAMP IN MILLISECONDS
-//ref:https://programmingtoddler.wordpress.com/2014/11/09/c-how-to-get-system-timestamp-in-second-millisecond-and-microsecond/
-long long sys_timestamp() {
-    struct timeb timer_msec;
-    long long int timestamp_msec; 
-    if (!ftime(&timer_msec)) {
-        timestamp_msec = ((long long int) timer_msec.time) * 1000ll +
-        (long long int) timer_msec.millitm;
-    }
-    else {
-        timestamp_msec = -1;
-    }
-    return timestamp_msec;
-}
-
-
-//set congestion window
-void set_cwnd(int value) {
-    cwnd = MIN(value, MAX_SEQ_NUM/2);
-}
-*/
+/*
+ //GET SYSTEM TIMESTAMP IN MILLISECONDS
+ //ref:https://programmingtoddler.wordpress.com/2014/11/09/c-how-to-get-system-timestamp-in-second-millisecond-and-microsecond/
+ long long sys_timestamp() {
+ struct timeb timer_msec;
+ long long int timestamp_msec;
+ if (!ftime(&timer_msec)) {
+ timestamp_msec = ((long long int) timer_msec.time) * 1000ll +
+ (long long int) timer_msec.millitm;
+ }
+ else {
+ timestamp_msec = -1;
+ }
+ return timestamp_msec;
+ }
+ 
+ 
+ //set congestion window
+ void set_cwnd(int value) {
+ cwnd = MIN(value, MAX_SEQ_NUM/2);
+ }
+ */
 
 #endif /* support_h */

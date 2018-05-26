@@ -6,7 +6,7 @@ int main(int argc, char **argv) {
     // Ensure valid command line args
     if (argc != 4) {
         fprintf(stderr,"usage: %s <hostname> <port> <filename>\n", argv[0]);
-        exit(0);
+        exit(1);
     }
     
     // Get the hostname and the port number.
@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         perror("Socket did not open.");
-        exit(0);
+        exit(1);
     }
     
     // Find the server's DNS entry.
@@ -41,21 +41,21 @@ int main(int argc, char **argv) {
     //    (char *)&serveraddr.sin_addr.s_addr, server->h_length);
     
     // Wait for a message from the client.
-
+    
     
     /*
-    int BUFSIZE = 1024;
-    char buf[BUFSIZE];
+     int BUFSIZE = 1024;
+     char buf[BUFSIZE];
+     
+     memset(buf, 0, BUFSIZE);
+     printf("Please enter msg: ");
+     fgets(buf, BUFSIZE, stdin);
+     */
     
-    memset(buf, 0, BUFSIZE);
-    printf("Please enter msg: ");
-    fgets(buf, BUFSIZE, stdin);
-    */    
-
-
+    
     socklen_t serverlen = sizeof(serveraddr);
     int n;
-  
+    
     // Begin the TCP 3-way Handshake
     
     // First, make the SYN_Packet
@@ -66,20 +66,20 @@ int main(int argc, char **argv) {
     SYN_Packet.FIN = 0;
     
     //n = sendto(sockfd, buf, strlen(buf), 0, (const struct sockaddr *) &serveraddr, serverlen);
-
+    
     // Then, send it to the server.
     n = sendto(sockfd, (struct TCP_Packet *) &SYN_Packet, sizeof(SYN_Packet), 0, (const struct sockaddr *) &serveraddr, serverlen);
     if (n < 0) {
         perror("sendto did not work");
-        exit(0);
+        exit(1);
     }
-
+    
     // Wait for the server to reply with a SYNACK packet.
     TCP_Packet * SYNACK_Packet = malloc(sizeof(TCP_Packet));
     n = recvfrom(sockfd, SYNACK_Packet, sizeof(*SYNACK_Packet), 0, (struct sockaddr *) &serveraddr, &serverlen);
-
+    
     printf("Received SYNACK with ack number: %d\n", SYNACK_Packet->ackNum);
-
+    
     // Make the Packet sending requested filename
     TCP_Packet Request_Packet;
     Request_Packet.seqNum = SYNACK_Packet->ackNum + 1024;
@@ -88,27 +88,39 @@ int main(int argc, char **argv) {
     Request_Packet.FIN = 0;
     //Request_Packet.payload = filename;
     strcpy(Request_Packet.payload, argv[3]);
-
+    
     printf("The client sends a request with filename: %s\n", Request_Packet.payload);
-
+    
     // Then send it to the server
     n = sendto(sockfd, (struct TCP_Packet *) &Request_Packet, sizeof(Request_Packet), 0, (const struct sockaddr *) &serveraddr, serverlen);
     if (n < 0) {
-      perror("sendto did not work");
-      exit(0);
+        perror("sendto did not work");
+        exit(1);
     }
-
-
+    
+    //SENDING THE PACKAGES TO SERVER
+    
+    int slen=sizeof(serveraddr);
+    for(int i = 0; i < NUM_PKG; i++) {
+        printf("Sending packet %d\n", i);
+        sprintf(Request_Packet.payload, "This is packet %d\n", i);
+        if (sendto(sockfd, Request_Packet.payload, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, slen)== -1) {
+            error("sendto() error");
+        }
+        
+    }
+    
+    
     
     // BELOW CODE NOT RELAVANT, BUT SAVED FOR FUTURE REFERENCE
     /*
-    // Print the server's reply
-    n = recvfrom(sockfd, buf, strlen(buf), 0, (struct sockaddr *) &serveraddr, &serverlen);
-    if (n < 0) {
-        perror("recvfrom did not work");
-        exit(0);
-    }
-    printf("Echo from server: %s", buf);
-    */
+     // Print the server's reply
+     n = recvfrom(sockfd, buf, strlen(buf), 0, (struct sockaddr *) &serveraddr, &serverlen);
+     if (n < 0) {
+     perror("recvfrom did not work");
+     exit(0);
+     }
+     printf("Echo from server: %s", buf);
+     */
     return 0;
 }
