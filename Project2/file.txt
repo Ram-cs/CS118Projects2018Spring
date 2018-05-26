@@ -1,0 +1,4 @@
+This is a testing file
+it has one char
+it has two char
+it has three char

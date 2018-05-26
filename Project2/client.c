@@ -100,16 +100,39 @@ int main(int argc, char **argv) {
     
     //SENDING THE PACKAGES TO SERVER
     
+    //    int slen=sizeof(serveraddr);
+    //    for(int i = 0; i < NUM_PKG; i++) {
+    //        printf("Sending packet %d\n", i);
+    //        sprintf(Request_Packet.payload, "This is packet %d\n", i);
+    ////        printf("***%s",Request_Packet.payload );
+    //        if (sendto(sockfd, Request_Packet.payload, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, slen)== -1) {
+    //            error("sendto() error");
+    //        }
+    //
+    //    }
+    
+    
+    //DIVIDE FILE INTO SMALL CHUNK, meaning read file upto the allowed size and repeat the process
+    FILE* fd = NULL;
+    char buffer[MAX_PKT_LENGTH]; //1024
+    size_t byte_read = 0;
+    fd = fopen(Request_Packet.payload, "r"); //open the client file
     int slen=sizeof(serveraddr);
-    for(int i = 0; i < NUM_PKG; i++) {
-        printf("Sending packet %d\n", i);
-        sprintf(Request_Packet.payload, "This is packet %d\n", i);
-        if (sendto(sockfd, Request_Packet.payload, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, slen)== -1) {
-            error("sendto() error");
+    
+    
+    if (fd != NULL) { //check if the file is empty
+        // read up to sizeof(buffer) bytes
+        while ((byte_read = fread(buffer, 1, sizeof(buffer), fd)) > 0)
+        {
+            // process bytesRead worth of data in buffer
+            printf("Sending packet DATA:: %s\n", buffer);
+            if (sendto(sockfd, buffer, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, slen)== -1) {
+                error("sendto() error");
+            }
         }
-        
     }
     
+    fclose(fd);
     
     
     // BELOW CODE NOT RELAVANT, BUT SAVED FOR FUTURE REFERENCE
