@@ -117,20 +117,59 @@ int main(int argc, char **argv) {
     char buffer[MAX_PKT_LENGTH]; //1024
     size_t byte_read = 0;
     fd = fopen(Request_Packet.payload, "r"); //open the client file
-    int slen=sizeof(serveraddr);
     
+    if(fd == NULL) { //if file is empty then exit
+        error("File is empty");
+    }
     
-    if (fd != NULL) { //check if the file is empty
-        // read up to sizeof(buffer) bytes
-        while ((byte_read = fread(buffer, 1, 19, fd)) > 0)
-        {
-            // process bytesRead worth of data in buffer
-            printf("Sending packet DATA:: %s\n", buffer);
-            if (sendto(sockfd, buffer, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, slen)== -1) {
+    fseek(fd, 0 , SEEK_END);
+    long fileSize = ftell(fd);
+    fseek(fd, 0 , SEEK_SET);
+    
+    if (fileSize <= 1008) { //if the size of fd is less or equal to 1008
+        fread(buffer, 1, fileSize, fd);
+        printf("Sending packet %d\n", Request_Packet.seqNum); //output sequence number
+        Request_Packet.seqNum += Request_Packet.seqNum + fileSize; //increase the sequence number by file size
+        if (sendto(sockfd, buffer, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, serverlen)== -1) {
+            error("sendto() error");
+        }
+    } else {
+        while(1) {
+            byte_read = fread(buffer, 1, 1008, fd); //loop untill file is greater than 1008
+            printf("Sending packet %d\n", Request_Packet.seqNum); //output sequence number
+            Request_Packet.seqNum += Request_Packet.seqNum + 1008; //increase the sequence number by 1008
+            if (sendto(sockfd, buffer, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, serverlen)== -1) {
                 error("sendto() error");
             }
+            
+            if (byte_read <= 0) { //if read all files then exit the loop
+                break;
+            }
+            
+            if (byte_read <= 1008) { //if file is less than 1008 then break
+                fread(buffer, 1, byte_read, fd);
+                printf("Sending packet %d\n", Request_Packet.seqNum); //output sequence number
+                Request_Packet.seqNum += Request_Packet.seqNum + byte_read; //increase the sequence number by file size
+                if (sendto(sockfd, buffer, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, serverlen)== -1) {
+                    error("sendto() error");
+                }
+                break;
+            }
+            
         }
     }
+    
+    //    if (fd != NULL) { //check if the file is empty
+    //        // read up to sizeof(buffer) bytes
+    //        while ((byte_read = fread(buffer, 1, 1008, fd)) > 0)
+    //        {
+    //            // process bytesRead worth of data in buffer
+    //            printf("Sending packet DATA:: %s\n", buffer);
+    //            if (sendto(sockfd, buffer, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &serveraddr, slen)== -1) {
+    //                error("sendto() error");
+    //            }
+    //        }
+    //    }
     
     fclose(fd);
     

@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     int sockfd;
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
-        perror("Socket did not open.");
+        perror("Socket can not create.");
         exit(1);
     }
     
@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
     
     // Wait for a SYN packet from the client.
     TCP_Packet * SYN_Packet = malloc(sizeof(TCP_Packet));
+    //Received SYN
     n = recvfrom(sockfd, SYN_Packet, sizeof(*SYN_Packet), 0, (struct sockaddr *) &clientaddr, &clientlen);
     
     printf("Received SYN with seq num: %d\n", SYN_Packet->seqNum);
@@ -50,28 +51,33 @@ int main(int argc, char **argv) {
     SYNACK_Packet.SYN = 1;
     SYNACK_Packet.FIN = 0;
     
-    // Then send it to the client.
+    // Send SYN and ACK.
     n = sendto(sockfd, (struct TCP_Packet *) &SYNACK_Packet, sizeof(SYNACK_Packet), 0, (struct sockaddr *) &clientaddr, clientlen);
     if (n < 0) {
         perror("sendto did not work");
         exit(1);
     }
     
-    // Wait for the final (request) packet in the 3-way handshake
+    // Wait for the final (request) packet in the 3-way handshake--> Established connection
     TCP_Packet * Request_Packet = malloc(sizeof(TCP_Packet) + 1024);
     n = recvfrom(sockfd, Request_Packet, sizeof(*Request_Packet) + 1024, 0, (struct sockaddr *) &clientaddr, &clientlen);
+    if (n == -1) {
+        error("reveive from error");
+    }
     
     printf("Received Packet with seq num: %d\n", Request_Packet->seqNum);
     printf("Received Packet with filename: %s\n", Request_Packet->payload);
     
     
-    //SENDING RECEIVED PACKAGE TO CLIENT
-    
+    //RECEIVED PACKAGE TO CLIENT
     
     for (int i = 0; i < NUM_PKG; i++) {
         if (recvfrom(sockfd, Request_Packet->payload, MAX_PKT_LENGTH, 0, (struct sockaddr *) &clientaddr, &clientlen)==-1) {
             error("reveive from error");
         }
+        
+        printf("Received packet %d\n", Request_Packet->seqNum); //output sequence number
+        
         printf("Received packet from %s:%d\nData: %s\n\n",
                inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port), Request_Packet->payload);
     }
