@@ -27,12 +27,12 @@
 
 
 
-
-//#define SYN 1
-//#define STATUS 2
-//#define DATA 3
-//#define ACK 4
-//#define FIN 5
+#define IS_SEQNUM 1
+#define IS_SYN 2
+#define IS_ACK 3
+#define IS_FIN 4
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 typedef struct
 {
@@ -40,8 +40,25 @@ typedef struct
     int ackNum;
     int SYN;
     int FIN;
+    int PKG_TYPE;
     char payload[MAX_PKT_LENGTH];
 } TCP_Packet;
+
+
+//PRINT ERROR
+void error(const char* error_message) {
+    perror(error_message);
+    exit(1);
+}
+
+void send_packet(int sockfd, struct sockaddr_in addr, TCP_Packet packet) { //sending packages
+    printf("Sending packet%d", packet.PKG_TYPE ? packet.ackNum : packet.seqNum); //if it is ACK or sequence number
+    
+    if(sendto(sockfd, &packet, sizeof(packet), 0, (struct sockaddr*)&addr, sizeof(struct sockaddr_in)) < 0) {
+        error("ERROR, can not send package");
+    }
+}
+
 
 /*
  #define MAX_SEQ_NUM 30720;
@@ -57,19 +74,14 @@ typedef struct
 //#define FIN 5
 
 
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+
 
 //FOR CONGESTION WINDOW
 int ssthreash = 15360;
 int cwnd = 1024;
 int dup_ACK_COUNT = 0;
 
-//PRINT ERROR
-void error(const char* error_message) {
-    perror(error_message);
-    exit(1);
-}
+
 
 /*
  //GET SYSTEM TIMESTAMP IN MILLISECONDS
