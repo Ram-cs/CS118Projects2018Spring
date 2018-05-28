@@ -98,41 +98,19 @@ int main(int argc, char **argv) {
     }
     printf("Sending packet %d\n", Request_Packet.seqNum);
 
-    FILE *fp;
-    fp = fopen("received.data","w");
+    TCP_Packet * Result_Packet = malloc(sizeof(TCP_Packet));
+    n = recvfrom(sockfd, Result_Packet, sizeof(*Result_Packet), 0, (struct sockaddr *) &serveraddr, &serverlen);
+    printf("Receiving packet %d\n", Result_Packet->ackNum);
+    printf("Received File Content: %s\n", Result_Packet->payload);
 
-    int finish_file = 0;
-    while(finish_file == 0)
-    {
 
-      TCP_Packet * Result_Packet = malloc(sizeof(TCP_Packet));
-      n = recvfrom(sockfd, Result_Packet, sizeof(*Result_Packet), 0, (struct sockaddr *) &serveraddr, &serverlen);
-      printf("Receiving packet %d\n", Result_Packet->ackNum);
-      fprintf(fp, "%s", Result_Packet->payload);
-      //printf("Received File Content: %s\n", Result_Packet->payload);
-      //printf("Received END: %d\n", Result_Packet->PKG_TYPE);
 
-      if (Result_Packet->PKG_TYPE == 1)
-        finish_file = 1;
 
-      TCP_Packet ackPacket;
-      ackPacket.seqNum = Result_Packet->ackNum;
-      ackPacket.ackNum = Result_Packet->seqNum + MAX_PKT_LENGTH;
-      ackPacket.SYN = 0;
-      ackPacket.FIN = 0;
-      ackPacket.PKG_TYPE= 0;
 
-      n = sendto(sockfd, (struct TCP_Packet *) &ackPacket, sizeof(ackPacket), 0, (const struct sockaddr *) &serveraddr, serverlen);
-      if (n < 0) {
-        perror("sendto did not work");
-        exit(1);
-      }
-      // printf("finish: %d", finish_file);
-      printf("Sending packet %d\n", ackPacket.seqNum);
 
-    }
 
-    fclose(fp);
+
+
 
 
 

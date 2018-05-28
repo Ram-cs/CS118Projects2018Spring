@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
     if (n == -1) {
         error("reveive from error");
     }
+    
     printf("Receiving Packet %d\n", Request_Packet->ackNum);
     
     //DIVIDE FILE INTO SMALL CHUNK, meaning read file upto the allowed size and repeat the process
@@ -81,94 +82,27 @@ int main(int argc, char **argv) {
     long fileSize = ftell(fd);
     fseek(fd, 0 , SEEK_SET);
 
-    //TCP_Packet packets[5];
-    //int curr_packet = 0;
+    TCP_Packet packets[5];
+    int curr_packet = 0;
 
-    TCP_Packet packet;
-    packet.seqNum = Request_Packet->ackNum;
-    packet.ackNum = Request_Packet->seqNum + MAX_PKT_LENGTH;
-    packet.SYN = 0;
-    packet.FIN = 0;
-
-    TCP_Packet * ackPacket = malloc(sizeof(TCP_Packet));
-
-    if (fileSize <= PAYLOAD_SIZE) { // if the size of fd is less or equal to PAYLOAD_SIZE
-      
-      packet.PKG_TYPE = 1;
+    if (fileSize <= PAYLOAD_SIZE) { //if the size of fd is less or equal to 1004
       fread(buffer, 1, fileSize, fd);
-      strcpy(packet.payload, buffer);
       
-      printf("Sending packet %d 5120\n", packet.seqNum);
-      if (sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
-        error("sendto() error");
-      }
-      fileSize = 0;
-      printf("Receiving Packet %d\n", ackPacket->ackNum);
-      if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-        error("reveive from error");
-      }
-    } 
-    else {
+      packets[curr_packet].seqNum = Request_Packet->ackNum;
+      packets[curr_packet].ackNum = Request_Packet->seqNum + MAX_PKT_LENGTH;
+      packets[curr_packet].SYN = 0;
+      packets[curr_packet].FIN = 0;
+      packets[curr_packet].PKG_TYPE = 0;
+      strcpy(packets[curr_packet].payload, buffer);
 
-      packet.PKG_TYPE = 0;
-      fread(buffer, 1, PAYLOAD_SIZE, fd);
-      strcpy(packet.payload, buffer);
-
-      printf("Sending packet %d 5120\n", packet.seqNum);
-      if (sendto(sockfd, (struct TCP_Packet *) &packet, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
+      printf("Sending packet %d 5120\n", packets[curr_packet].seqNum); //output sequence number
+      if (sendto(sockfd, (struct TCP_Packet *) &packets[curr_packet], 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
 	error("sendto() error");
       }
-      fileSize -= PAYLOAD_SIZE;
-
-      printf("Receiving Packet %d\n", ackPacket->ackNum);
-      if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-	error("reveive from error");
-      }
-        
-      while(fileSize > 0) {
-
-        packet.seqNum = ackPacket->ackNum;
-	packet.ackNum = ackPacket->seqNum + MAX_PKT_LENGTH;
-	packet.SYN = 0;
-	packet.FIN = 0;
-
-        if (fileSize <= PAYLOAD_SIZE) { // if the size of fd is less or equal to PAYLOAD_SIZE
-
-          packet.PKG_TYPE = 1;
-	  fread(buffer, 1, fileSize, fd);
-	  strcpy(packet.payload, buffer);
-
-	  printf("Sending packet %d 5120\n", packet.seqNum);
-	  if (sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
-	    error("sendto() error");
-	  }
-	  fileSize = 0;
-	  printf("Receiving Packet %d\n", ackPacket->ackNum);
-	  if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-	    error("reveive from error");
-	  }
-	}
-
-        else {
-
-          packet.PKG_TYPE = 0;
-	  fread(buffer, 1, PAYLOAD_SIZE, fd);
-	  strcpy(packet.payload, buffer);
-
-	  printf("Sending packet %d 5120\n", packet.seqNum);
-	  if (sendto(sockfd, (struct TCP_Packet *) &packet, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
-	    error("sendto() error");
-	  }
-	  fileSize -= PAYLOAD_SIZE;
-
-	  printf("Receiving Packet %d\n", ackPacket->ackNum);
-	  if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-	    error("reveive from error");
-	  }
-        }
-
-
-        /*
+      fileSize = 0;
+      curr_packet++;
+    } else {
+      while(1) {
 	fread(buffer, 1, PAYLOAD_SIZE, fd); //loop untill file is greater than PAYLOAD_SIZE
 	
         packets[curr_packet].seqNum = packets[curr_packet - 1].ackNum;
@@ -207,7 +141,6 @@ int main(int argc, char **argv) {
 	  }
 	  break;
 	}
-        */
 
       }
     }
