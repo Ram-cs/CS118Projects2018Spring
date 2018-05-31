@@ -93,11 +93,13 @@ int main(int argc, char **argv) {
     //TCP_Packet packets[5];
     //int curr_packet = 0;
 
-    signal(SIGALRM, retransmit);
+    //signal(SIGALRM, retransmit);
+
+    int expected_ACK_STATE = 0;
 
     TCP_Packet packet;
-    packet.seqNum = Request_Packet->ackNum;
-    packet.ackNum = Request_Packet->seqNum + MAX_PKT_LENGTH;
+    packet.seqNum = 0;
+    packet.ackNum = 0;
     packet.SYN = 0;
     packet.FIN = 0;
 
@@ -113,11 +115,23 @@ int main(int argc, char **argv) {
       if (sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
         error("sendto() error");
       }
+
+      // Start the timer here
+
       fileSize = 0;
       printf("Receiving Packet %d\n", ackPacket->ackNum);
       if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
         error("reveive from error");
       }
+
+      if (ackPacket->ackNum == expected_ACK_STATE)
+      {
+        expected_ACK_STATE = ~expected_ACK_STATE;
+        // stop the timer here
+      }
+      // else if (ackPacket->ackNum != expected_ACK_state), DO NOTHING
+        
+
     } 
     else {
 
@@ -131,15 +145,23 @@ int main(int argc, char **argv) {
       }
       fileSize -= PAYLOAD_SIZE;
 
+      // Start the timer here
+
       printf("Receiving Packet %d\n", ackPacket->ackNum);
       if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
 	error("reveive from error");
       }
+
+      if (ackPacket->ackNum == expected_ACK_STATE)
+      {
+        expected_ACK_STATE = ~expected_ACK_STATE;
+        // stop the timer here
+      } 
         
       while(fileSize > 0) {
 
-        packet.seqNum = ackPacket->ackNum;
-	packet.ackNum = ackPacket->seqNum + MAX_PKT_LENGTH;
+        packet.seqNum = expected_ACK_STATE;
+	packet.ackNum = expected_ACK_STATE;
 	packet.SYN = 0;
 	packet.FIN = 0;
 
@@ -186,110 +208,10 @@ int main(int argc, char **argv) {
 	  }
         }
 
-
-        /*
-	fread(buffer, 1, PAYLOAD_SIZE, fd); //loop untill file is greater than PAYLOAD_SIZE
-	
-        packets[curr_packet].seqNum = packets[curr_packet - 1].ackNum;
-	packets[curr_packet].ackNum = packets[curr_packet - 1].seqNum + MAX_PKT_LENGTH;
-	packets[curr_packet].SYN = 0;
-	packets[curr_packet].FIN = 0;
-	packets[curr_packet].PKG_TYPE = 0;
-	strcpy(packets[curr_packet].payload, buffer);
-
-        printf("Sending packet %d 5120\n", packets[curr_packet].seqNum); //output sequence number
-        
-	if (sendto(sockfd, (struct TCP_Packet *) &packets[curr_packet], MAX_PKT_LENGTH, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
-	  error("sendto() error");
-	}
-        curr_packet++;
-        fileSize = fileSize - MAX_PKT_LENGTH;
-
-	if (fileSize <= 0) { // if read all files then exit the loop
-	  break;
-	}
-
-	if (fileSize <= HEADER_SIZE) { // if file is less than HEADER_SIZE then break
-	  fread(buffer, 1, fileSize, fd);
-          
-          packets[curr_packet].seqNum = packets[curr_packet - 1].ackNum;
-	  packets[curr_packet].ackNum = packets[curr_packet - 1].seqNum + MAX_PKT_LENGTH;
-	  packets[curr_packet].SYN = 0;
-	  packets[curr_packet].FIN = 0;
-	  packets[curr_packet].PKG_TYPE = 0;
-	  strcpy(packets[curr_packet].payload, buffer);
-
-          printf("Sending packet %d 5120\n", packets[curr_packet].seqNum);
-
-	  if (sendto(sockfd, (struct TCP_Packet *) &packets[curr_packet], 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
-	    error("sendto() error");
-	  }
-	  break;
-	}
-        */
-
       }
     }
      
     fclose(fd);
     
-    //RECEIVED PACKAGE TO CLIENT
-    
-    /*
-    for (int i = 0; i < NUM_PKG; i++) {
-        if (recvfrom(sockfd, Request_Packet->payload, MAX_PKT_LENGTH, 0, (struct sockaddr *) &clientaddr, &clientlen)==-1) {
-            error("reveive from error");
-        }
-        
-        printf("Received packet %d\n", Request_Packet->seqNum); //output sequence number
-        
-        printf("Received packet from %s:%d\nData: %s\n\n",
-               inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port), Request_Packet->payload);
-    }
-    */
-    
-    
-    
-    /*
-     int BUFSIZE = 1024;
-     char buf[BUFSIZE]; // Buffer for the message
-     
-     struct hostent *hostp; // information about the client host
-     char *hostaddrp; // Dotted decimal host address string
-     
-     while (1) {
-     
-     // Get an UDP packet from the client.
-     memset(buf, 0, BUFSIZE);
-     n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *) &clientaddr, &clientlen);
-     if (n < 0) {
-     perror("recvfrom did not work");
-     exit(1);
-     }
-     
-     // Figure out which client sent the UDP packet.
-     hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr,
-     sizeof(clientaddr.sin_addr.s_addr), AF_INET);
-     if (hostp == NULL) {
-     perror("gethostbyaddr did not work");
-     exit(1);
-     }
-     hostaddrp = inet_ntoa(clientaddr.sin_addr);
-     if (hostaddrp == NULL) {
-     perror("inet_nota did not work");
-     exit(1);
-     }
-     
-     printf("server received datagram from %s (%s)\n", hostp->h_name, hostaddrp);
-     //printf("server received %d/%d bytes: %s\n", strlen(buf), n, buf);
-     
-     // Send the input back to the client.
-     n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *) &clientaddr, clientlen);
-     if (n < 0) {
-     perror("sendto did not work");
-     exit(1);
-     }
-     }
-     */
     return 0;
 }

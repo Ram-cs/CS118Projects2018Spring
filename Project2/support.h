@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 
 #include <sys/timeb.h>  // timestamp in millisecond
+#include <signal.h>
 
 
 #define MAX_SEQ_NUM 30720
