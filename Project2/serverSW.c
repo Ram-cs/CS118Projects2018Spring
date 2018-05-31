@@ -1,6 +1,6 @@
 #include "support.h"
 
-/*
+
 int retransmitFlag = 0;
 
 void retransmit(int sig)
@@ -8,7 +8,7 @@ void retransmit(int sig)
   retransmitFlag = 1;
   signal(SIGALRM, retransmit);
 }
-*/
+
 int main(int argc, char **argv) {
     
     // Ensure valid command line args
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     //TCP_Packet packets[5];
     //int curr_packet = 0;
 
-    //signal(SIGALRM, retransmit);
+    signal(SIGALRM, retransmit);
 
     int expected_ACK_STATE = 0;
 
@@ -122,6 +122,18 @@ int main(int argc, char **argv) {
       printf("Receiving Packet %d\n", ackPacket->ackNum);
       if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
         error("reveive from error");
+      }
+
+      if (retransmitFlag == 1)
+      {
+        while (retransmitFlag == 1)
+	{
+          
+          
+
+          
+
+        }
       }
 
       if (ackPacket->ackNum == expected_ACK_STATE)
@@ -176,7 +188,7 @@ int main(int argc, char **argv) {
 	    error("sendto() error");
 	  }
           // Set an alarm for 500 ms.
-          //ualarm(500000, 0);
+          ualarm(500000, 0);
           
 	  fileSize = 0;
 	  printf("Receiving Packet %d\n", ackPacket->ackNum);
@@ -186,7 +198,40 @@ int main(int argc, char **argv) {
 	    error("reveive from error");
 	  }
           // Disable the previously set alarm.
-          //ualarm(0, 0);
+
+          if (retransmitFlag == 1)
+	    {
+	      while (retransmitFlag == 1)
+		{
+                  printf("Sending packet %d 5120 Retransmission\n", packet.seqNum);
+		  if (sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
+		    error("sendto() error");
+		  }
+
+                  ualarm(500000, 0);
+                  fileSize = 0;
+		  printf("Receiving Packet %d\n", ackPacket->ackNum);
+
+
+		  if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
+		    error("reveive from error");
+		  }
+
+                  if (ackPacket->ackNum == expected_ACK_STATE)
+		    {
+                      retransmitFlag = 0;
+                      break;
+		    }
+
+		}
+	    }
+
+          if (ackPacket->ackNum == expected_ACK_STATE)
+	    {
+	      expected_ACK_STATE = ~expected_ACK_STATE;
+	      // stop the timer here
+              ualarm(0, 0);
+	    }
           
 	}
 
