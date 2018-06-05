@@ -1,6 +1,6 @@
 #include "support.h"
 
-/*
+
 int retransmitFlag = 0;
 
 void retransmit(int sig)
@@ -8,7 +8,7 @@ void retransmit(int sig)
   retransmitFlag = 1;
   signal(SIGALRM, retransmit);
 }
-*/
+
 int main(int argc, char **argv) {
     
     // Ensure valid command line args
