@@ -1,14 +1,5 @@
 #include "support.h"
 
-
-int retransmitFlag = 0;
-
-void retransmit(int sig)
-{
-  retransmitFlag = 1;
-  signal(SIGALRM, retransmit);
-}
-
 int main(int argc, char **argv) {
     
     // Ensure valid command line args
@@ -40,6 +31,11 @@ int main(int argc, char **argv) {
         perror("Socket did not bind.");
         exit(1);
     }
+
+    struct timeval read_timeout;
+    read_timeout.tv_sec = 2;
+    read_timeout.tv_usec = 0;
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
     
     // Get a UDP packet (datagram), then echo it.
     struct sockaddr_in clientaddr;
@@ -47,16 +43,18 @@ int main(int argc, char **argv) {
     int n; // Buffer size for the message
     
     // Wait for a SYN packet from the client.
+    /*
     TCP_Packet * SYN_Packet = malloc(sizeof(TCP_Packet));
     //Received SYN
     n = recvfrom(sockfd, SYN_Packet, sizeof(*SYN_Packet), 0, (struct sockaddr *) &clientaddr, &clientlen);
     
     printf("Receiving packet %d\n", SYN_Packet->ackNum);
+
     
     // Create a SYNACK packet.
     TCP_Packet SYNACK_Packet;
-    SYNACK_Packet.seqNum = 2000;
-    SYNACK_Packet.ackNum = SYN_Packet->seqNum + HEADER_SIZE;
+    SYNACK_Packet.seqNum = 1;
+    SYNACK_Packet.ackNum = 1;
     SYNACK_Packet.SYN = 1;
     SYNACK_Packet.FIN = 0;
     SYNACK_Packet.PKG_TYPE = 0;
@@ -68,7 +66,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
     printf("Sending packet %d 5120 SYN\n", SYNACK_Packet.seqNum);
-    
+    */
     // Wait for the final (request) packet in the 3-way handshake--> Established connection
     TCP_Packet * Request_Packet = malloc(sizeof(TCP_Packet));
     n = recvfrom(sockfd, Request_Packet, sizeof(*Request_Packet), 0, (struct sockaddr *) &clientaddr, &clientlen);
@@ -93,8 +91,6 @@ int main(int argc, char **argv) {
     //TCP_Packet packets[5];
     //int curr_packet = 0;
 
-    signal(SIGALRM, retransmit);
-
     int expected_ACK_STATE = 0;
 
     TCP_Packet packet;
@@ -105,6 +101,7 @@ int main(int argc, char **argv) {
 
     TCP_Packet * ackPacket = malloc(sizeof(TCP_Packet));
 
+    
     if (fileSize <= PAYLOAD_SIZE) { // if the size of fd is less or equal to PAYLOAD_SIZE
       
       packet.PKG_TYPE = 1;
@@ -119,33 +116,35 @@ int main(int argc, char **argv) {
       // Start the timer here
 
       fileSize = 0;
-      printf("Receiving Packet %d\n", ackPacket->ackNum);
-      if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-        error("reveive from error");
-      }
-
-      if (retransmitFlag == 1)
-      {
-        while (retransmitFlag == 1)
+      //printf("Receiving Packet %d\n", ackPacket->ackNum);
+      n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
+      if (n == -1)
 	{
-          
-          
+	  while (n == -1)
+	    {
+	      sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen);
+	      printf("Sending packet %d 5120 Retransmission\n", packet.seqNum);
 
-          
-
-        }
-      }
+	      n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
+	      printf("Receiving Packet %d\n", ackPacket->ackNum);
+	    }
+	}
+      else
+	printf("Receiving Packet %d\n", ackPacket->ackNum);
 
       if (ackPacket->ackNum == expected_ACK_STATE)
       {
-        expected_ACK_STATE = ~expected_ACK_STATE;
+	if (expected_ACK_STATE == 0)
+	  expected_ACK_STATE = 1;
+	else if (expected_ACK_STATE == 1)
+	  expected_ACK_STATE = 0;
         // stop the timer here
       }
       // else if (ackPacket->ackNum != expected_ACK_state), DO NOTHING
         
 
     } 
-    else {
+    else { // if the size is greater than the payload size
 
       packet.PKG_TYPE = 0;
       fread(buffer, 1, PAYLOAD_SIZE, fd);
@@ -157,16 +156,27 @@ int main(int argc, char **argv) {
       }
       fileSize -= PAYLOAD_SIZE;
 
-      // Start the timer here
+      n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
+      if (n == -1)
+	{
+	  while (n == -1)
+	    {
+	      sendto(sockfd, (struct TCP_Packet *) &packet, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &clientaddr, clientlen);
+	      printf("Sending packet %d 5120 Retransmission\n", packet.seqNum);
 
-      printf("Receiving Packet %d\n", ackPacket->ackNum);
-      if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-	error("reveive from error");
-      }
+	      n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
+	      printf("Receiving Packet %d\n", ackPacket->ackNum);
+	    }
+	}
+      else
+	printf("Receiving Packet %d\n", ackPacket->ackNum);
 
       if (ackPacket->ackNum == expected_ACK_STATE)
       {
-        expected_ACK_STATE = ~expected_ACK_STATE;
+	if (expected_ACK_STATE == 0)
+	  expected_ACK_STATE = 1;
+	else if (expected_ACK_STATE == 1)
+	  expected_ACK_STATE = 0;
         // stop the timer here
       } 
         
@@ -187,50 +197,33 @@ int main(int argc, char **argv) {
 	  if (sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
 	    error("sendto() error");
 	  }
-          // Set an alarm for 500 ms.
-          ualarm(500000, 0);
           
 	  fileSize = 0;
-	  printf("Receiving Packet %d\n", ackPacket->ackNum);
+	  //printf("Receiving Packet %d\n", ackPacket->ackNum);
           
           
-	  if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-	    error("reveive from error");
-	  }
-          // Disable the previously set alarm.
-
-          if (retransmitFlag == 1)
+	  n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
+	  if (n == -1)
 	    {
-	      while (retransmitFlag == 1)
+	      while (n == -1)
 		{
-                  printf("Sending packet %d 5120 Retransmission\n", packet.seqNum);
-		  if (sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
-		    error("sendto() error");
-		  }
+		  sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen);
+		  printf("Sending packet %d 5120 Retransmission\n", packet.seqNum);
 
-                  ualarm(500000, 0);
-                  fileSize = 0;
+		  n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
 		  printf("Receiving Packet %d\n", ackPacket->ackNum);
-
-
-		  if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-		    error("reveive from error");
-		  }
-
-                  if (ackPacket->ackNum == expected_ACK_STATE)
-		    {
-                      retransmitFlag = 0;
-                      break;
-		    }
-
 		}
 	    }
-
+	  else
+	    printf("Receiving Packet %d\n", ackPacket->ackNum);
+	  
           if (ackPacket->ackNum == expected_ACK_STATE)
 	    {
-	      expected_ACK_STATE = ~expected_ACK_STATE;
+	      if (expected_ACK_STATE == 0)
+		expected_ACK_STATE = 1;
+	      else if (expected_ACK_STATE == 1)
+		expected_ACK_STATE = 0;
 	      // stop the timer here
-              ualarm(0, 0);
 	    }
           
 	}
@@ -247,10 +240,32 @@ int main(int argc, char **argv) {
 	  }
 	  fileSize -= PAYLOAD_SIZE;
 
-	  printf("Receiving Packet %d\n", ackPacket->ackNum);
-	  if (recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen) == -1) {
-	    error("reveive from error");
-	  }
+	  //printf("Receiving Packet %d\n", ackPacket->ackNum);
+	  n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
+	  if (n == -1)
+	    {
+	      while (n == -1)
+		{
+		  sendto(sockfd, (struct TCP_Packet *) &packet, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &clientaddr, clientlen);
+		  printf("Sending packet %d 5120 Retransmission\n", packet.seqNum);
+
+		  n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
+		  printf("Receiving Packet %d\n", ackPacket->ackNum);
+		}
+	    }
+	  else
+	    printf("Receiving Packet %d\n", ackPacket->ackNum);
+
+	  if (ackPacket->ackNum == expected_ACK_STATE)
+	    {
+	      if (expected_ACK_STATE == 0)
+		expected_ACK_STATE = 1;
+	      else if (expected_ACK_STATE == 1)
+		expected_ACK_STATE = 0;
+	      // stop the timer here
+	    }
+
+	  
         }
 
       }
