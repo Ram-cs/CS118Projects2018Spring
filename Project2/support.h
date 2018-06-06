@@ -22,8 +22,8 @@
 
 #define MAX_SEQ_NUM 30720
 #define MAX_PKT_LENGTH 1024
-#define HEADER_SIZE 20
-#define PAYLOAD_SIZE 1004
+#define HEADER_SIZE 24
+#define PAYLOAD_SIZE 1000
 #define TIMEOUT 500
 #define WND_SIZE 5120
 #define NUM_PKG 10 //number of package allowed to send
@@ -44,6 +44,7 @@ typedef struct
     int SYN;
     int FIN;
     int PKG_TYPE;
+  int payload_size;
     char payload[MAX_PKT_LENGTH];
 } TCP_Packet;
 

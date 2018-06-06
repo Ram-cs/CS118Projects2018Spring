@@ -106,10 +106,13 @@ int main(int argc, char **argv) {
       
       packet.PKG_TYPE = 1;
       fread(buffer, 1, fileSize, fd);
-      strcpy(packet.payload, buffer);
+      //strcpy(packet.payload, buffer);
+      packet.payload_size = fileSize;
+      memcpy(packet.payload, buffer, sizeof(buffer));
+
       
       printf("Sending packet %d 5120\n", packet.seqNum);
-      if (sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
+      if (sendto(sockfd, (struct TCP_Packet *) &packet, 24 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
         error("sendto() error");
       }
 
@@ -122,7 +125,7 @@ int main(int argc, char **argv) {
 	{
 	  while (n == -1)
 	    {
-	      sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen);
+	      sendto(sockfd, (struct TCP_Packet *) &packet, 24 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen);
 	      printf("Sending packet %d 5120 Retransmission\n", packet.seqNum);
 
 	      n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
@@ -148,7 +151,9 @@ int main(int argc, char **argv) {
 
       packet.PKG_TYPE = 0;
       fread(buffer, 1, PAYLOAD_SIZE, fd);
-      strcpy(packet.payload, buffer);
+      //strcpy(packet.payload, buffer);
+      packet.payload_size = PAYLOAD_SIZE;
+      memcpy(packet.payload, buffer, sizeof(buffer));
 
       printf("Sending packet %d 5120\n", packet.seqNum);
       if (sendto(sockfd, (struct TCP_Packet *) &packet, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
@@ -191,10 +196,12 @@ int main(int argc, char **argv) {
 
           packet.PKG_TYPE = 1;
 	  fread(buffer, 1, fileSize, fd);
-	  strcpy(packet.payload, buffer);
+	  //strcpy(packet.payload, buffer);
+	  packet.payload_size = fileSize;
+	  memcpy(packet.payload, buffer, sizeof(buffer));
 
 	  printf("Sending packet %d 5120\n", packet.seqNum);
-	  if (sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
+	  if (sendto(sockfd, (struct TCP_Packet *) &packet, 24 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {
 	    error("sendto() error");
 	  }
           
@@ -207,7 +214,7 @@ int main(int argc, char **argv) {
 	    {
 	      while (n == -1)
 		{
-		  sendto(sockfd, (struct TCP_Packet *) &packet, 20 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen);
+		  sendto(sockfd, (struct TCP_Packet *) &packet, 24 + fileSize, 0, (const struct sockaddr *) &clientaddr, clientlen);
 		  printf("Sending packet %d 5120 Retransmission\n", packet.seqNum);
 
 		  n = recvfrom(sockfd, ackPacket, sizeof(*ackPacket), 0, (struct sockaddr *) &clientaddr, &clientlen);
@@ -232,7 +239,9 @@ int main(int argc, char **argv) {
 
           packet.PKG_TYPE = 0;
 	  fread(buffer, 1, PAYLOAD_SIZE, fd);
-	  strcpy(packet.payload, buffer);
+	  //strcpy(packet.payload, buffer);
+	  packet.payload_size = PAYLOAD_SIZE;
+	  memcpy(packet.payload, buffer, sizeof(buffer));
 
 	  printf("Sending packet %d 5120\n", packet.seqNum);
 	  if (sendto(sockfd, (struct TCP_Packet *) &packet, MAX_PKT_LENGTH, 0, (const struct sockaddr *) &clientaddr, clientlen)== -1) {

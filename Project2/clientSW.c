@@ -122,8 +122,10 @@ int main(int argc, char **argv) {
       // If the incoming packet is not a duplicate:
       if (Result_Packet->ackNum == expected_ACK_NUM)
       { 
-        fprintf(fp, "%s", Result_Packet->payload);
-      
+        //fprintf(fp, "%s", Result_Packet->payload);
+	fwrite(Result_Packet->payload, Result_Packet->payload_size, 1, fp);
+
+	
         if (Result_Packet->PKG_TYPE == 1)
           finish_file = 1;
 
