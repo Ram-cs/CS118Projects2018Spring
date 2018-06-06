@@ -86,6 +86,7 @@ int main(int argc, char **argv) {
     n = recvfrom(sockfd, SYNACK_Packet, sizeof(*SYNACK_Packet), 0, (struct sockaddr *) &serveraddr, &serverlen);
     printf("Receiving packet %d\n", SYNACK_Packet->ackNum);
     */
+    
     // Make the Packet sending requested filename
     TCP_Packet Request_Packet;
     Request_Packet.seqNum = 1;
@@ -164,56 +165,6 @@ int main(int argc, char **argv) {
 	
         printf("Sending packet %d\n", ackPacketDup.seqNum);
       }
-
-      /*
-      if (finish_file == 1)
-        break;
-
-      TCP_Packet * Result_Packet1 = malloc(sizeof(TCP_Packet));
-      n = recvfrom(sockfd, Result_Packet1, sizeof(*Result_Packet1), 0, (struct sockaddr *) &serveraddr, &serverlen);
-      printf("Receiving packet %d\n", Result_Packet1->ackNum);
-      
-      // If the incoming packet is not a duplicate: 
-      if (Result_Packet1->ackNum != 0)
-      {
-        fprintf(fp, "%s", Result_Packet1->payload);
-
-        if (Result_Packet1->PKG_TYPE == 1)
-          finish_file = 1;
-
-        TCP_Packet ackPacket1;
-        ackPacket1.seqNum = 1;
-        ackPacket1.ackNum = 1;
-        ackPacket1.SYN = 0;
-        ackPacket1.FIN = 0;
-        ackPacket1.PKG_TYPE= 0;
-
-        n = sendto(sockfd, (struct TCP_Packet *) &ackPacket1, sizeof(ackPacket1), 0, (const struct sockaddr *) &serveraddr, serverlen);
-        if (n < 0) {
-          perror("sendto did not work");
-          exit(1);
-        }
-        printf("Sending packet %d\n", ackPacket1.seqNum);
-      }
-      // Else it is a duplicate:
-      else
-      {
-	
-        TCP_Packet ackPacket0;
-        ackPacket0.seqNum = 0;
-        ackPacket0.ackNum = 0;
-        ackPacket0.SYN = 0;
-        ackPacket0.FIN = 0;
-        ackPacket0.PKG_TYPE= 0;
-
-        n = sendto(sockfd, (struct TCP_Packet *) &ackPacket0, sizeof(ackPacket0), 0, (const struct sockaddr *) &serveraddr, serverlen);
-        if (n < 0) {
-          perror("sendto did not work");
-          exit(1);
-        }
-        printf("Sending packet %d\n", ackPacket0.seqNum);
-      }
-      */
     }
 
     fclose(fp);
