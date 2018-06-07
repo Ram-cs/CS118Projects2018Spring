@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     
     //DIVIDE FILE INTO SMALL CHUNK, meaning read file upto the allowed size and repeat the process
     FILE* fd = NULL;
-    char buffer[MAX_PKT_LENGTH]; //1024
+    char buffer[PAYLOAD_SIZE]; //1024
     // size_t byte_read = 0;
     fd = fopen(Request_Packet->payload, "r"); //open the client file
     if(fd == NULL) { //if file is empty then exit

@@ -115,6 +115,7 @@ int main(int argc, char **argv) {
 
       
       TCP_Packet * Result_Packet = malloc(sizeof(TCP_Packet));
+      printf("%lu\n", sizeof(*Result_Packet));
       n = recvfrom(sockfd, Result_Packet, sizeof(*Result_Packet), 0, (struct sockaddr *) &serveraddr, &serverlen);
       printf("Receiving packet %d\n", Result_Packet->ackNum);
       

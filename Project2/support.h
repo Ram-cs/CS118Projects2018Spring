@@ -45,7 +45,7 @@ typedef struct
     int FIN;
     int PKG_TYPE;
   int payload_size;
-    char payload[MAX_PKT_LENGTH];
+    char payload[PAYLOAD_SIZE];
 } TCP_Packet;
 
 
