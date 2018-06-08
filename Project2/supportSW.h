@@ -1,3 +1,5 @@
+
+
 #ifndef support_h
 #define support_h
 //CLIENT
@@ -14,16 +16,14 @@
 #include <string.h>
 #include <arpa/inet.h>
 
-#include <time.h>
 #include <sys/timeb.h>  // timestamp in millisecond
 #include <signal.h>
-#include <poll.h>
 
 
 #define MAX_SEQ_NUM 30720
 #define MAX_PKT_LENGTH 1024
-#define HEADER_SIZE 28
-#define PAYLOAD_SIZE 996
+#define HEADER_SIZE 24
+#define PAYLOAD_SIZE 1000
 #define TIMEOUT 500
 #define WND_SIZE 5120
 #define NUM_PKG 10 //number of package allowed to send
@@ -44,8 +44,7 @@ typedef struct
     int SYN;
     int FIN;
     int PKG_TYPE;
-    int payload_size;
-    int origSeqNum;
+  int payload_size;
     char payload[PAYLOAD_SIZE];
 } TCP_Packet;
 
