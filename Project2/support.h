@@ -18,7 +18,7 @@
 #include <sys/timeb.h>  // timestamp in millisecond
 #include <signal.h>
 #include <poll.h>
-
+#include <sys/time.h>
 
 #define MAX_SEQ_NUM 30720
 #define MAX_PKT_LENGTH 1024
@@ -88,23 +88,18 @@ int dup_ACK_COUNT = 0;
 
 
 
+
+//GET SYSTEM TIMESTAMP IN MILLISECONDS
+//ref:https://programmingtoddler.wordpress.com/2014/11/09/c-how-to-get-system-timestamp-in-second-millisecond-and-microsecond/
+long long sys_timestamp() {
+    struct timeval te;
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate milliseconds
+    // printf("milliseconds: %lld\n", milliseconds);
+    return milliseconds;
+}
+
 /*
- //GET SYSTEM TIMESTAMP IN MILLISECONDS
- //ref:https://programmingtoddler.wordpress.com/2014/11/09/c-how-to-get-system-timestamp-in-second-millisecond-and-microsecond/
- long long sys_timestamp() {
- struct timeb timer_msec;
- long long int timestamp_msec;
- if (!ftime(&timer_msec)) {
- timestamp_msec = ((long long int) timer_msec.time) * 1000ll +
- (long long int) timer_msec.millitm;
- }
- else {
- timestamp_msec = -1;
- }
- return timestamp_msec;
- }
- 
- 
  //set congestion window
  void set_cwnd(int value) {
  cwnd = MIN(value, MAX_SEQ_NUM/2);

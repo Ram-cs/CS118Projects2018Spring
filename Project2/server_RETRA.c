@@ -1,5 +1,5 @@
 #include "support.h"
-#include "support_RETRA.c"
+#include "vector.h"
 
 int main(int argc, char **argv) {
     
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
     
     vector timing;
     vector_init(&timing);
-    int vector_index = 0;
+    
     
     // Then, send data packets to the client
     for (int i = 0; i < cwnd.total; i++)
@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
                 
                 if (sendto(sockfd, resent_packate, sizeof(*resent_packate), 0, (const struct sockaddr *) &clientaddr, clientlen) != -1)
                 {
-                    printf("Sending packet %d 5120\n", resent_packate->seqNum);
+                    printf("Sending packet %d 5120 Retransmission\n", resent_packate->seqNum);
                 }
                 
                 //then now start new time

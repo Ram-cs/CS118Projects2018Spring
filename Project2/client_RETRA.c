@@ -1,5 +1,5 @@
 #include "support.h"
-#include "support_RETRA.c"
+#include "vector.h"
 
 int main(int argc, char **argv) {
     
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
                     vector_add(&history_buffer, &Result_Packet->seqNum);
                     
                     // Set the next expected sequence number.
-                    expected_SEQ_NUM += Result_Packet->payload_size;
+                    expected_SEQ_NUM += 1024;
                     // If this is the last packet, prepare to exit the event loop
                     if (Result_Packet->PKG_TYPE == 1)
                     finish_file = 1;
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
                                 fwrite(first_packet->payload, first_packet->payload_size, 1, fp);
                                 vector_add(&history_buffer, &Result_Packet->seqNum);
                                 
-                                expected_SEQ_NUM += first_packet->payload_size;
+                                expected_SEQ_NUM += 1024;
                                 vector_delete(&fileBuffer, 0);
                             }
                             else
@@ -188,4 +188,3 @@ int main(int argc, char **argv) {
     }
     
 }
-
