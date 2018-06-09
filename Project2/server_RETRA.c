@@ -133,28 +133,31 @@ int main(int argc, char **argv) {
     }
     
     struct pollfd thePoll[1];
-    thePoll[0].fd = sockfd;
-    thePoll[0].events = POLLIN;
+    
     
     TCP_Packet * resent_packate = malloc(sizeof(TCP_Packet));
-    long long *current_time = malloc(sizeof(100));
-    long long *packate_time = malloc(sizeof(100));
-    long long *vector_sequence = malloc(sizeof(100));
-    long long *vector_ackNum = malloc(sizeof(100));
+    long long *current_time = malloc(sizeof(long long));
+    long long *packate_time = malloc(sizeof(long long));
+    long long *vector_sequence = malloc(sizeof(long long));
+    long long *vector_ackNum = malloc(sizeof(long long));
+    TCP_Packet * tempPacket_retrasnmit = malloc(sizeof(TCP_Packet));
+    
     
     while (cwnd.total > 0) // the cwnd contains a packet to send
     {
         
         // First, use poll to read from the socket to see if there is any ACK packets we need to inspect
         //Retrasmission of the packet that are lost
-        
-        
         for(int j = 0; j < timing.total; j = j + 3) {
             packate_time = vector_get(&timing, j);
+            //            printf("package time %d==>%lld\n", j, *packate_time);
             *current_time = sys_timestamp(); //get the current time of the system
+            //            printf("current time =======>%lld\n", *current_time);
             long long packate_timestamp = *current_time - *packate_time;
-    
+            
+            //            printf("timestamp =========>%lld\n", packate_timestamp);
             if(packate_timestamp > 500) { //if packate time is greater than 500ms then resend the package
+                printf("************************************************\n");
                 int sequence  = j + 1;
                 vector_sequence = vector_get(&timing, sequence); //sequence number
                 int ack_num = sequence + 1;
@@ -165,26 +168,50 @@ int main(int argc, char **argv) {
                 resent_packate->PKG_TYPE = 0;
                 resent_packate->ackNum = *vector_ackNum;
                 
-                if (sendto(sockfd, resent_packate, sizeof(*resent_packate), 0, (const struct sockaddr *) &clientaddr, clientlen) != -1)
-                {
-                    printf("Sending packet %d 5120 Retransmission\n", resent_packate->seqNum);
+                
+                for(int k = 0; k < cwnd.total; k++) {
+                    tempPacket_retrasnmit = vector_get(&cwnd, k);
+                    
+                    if(tempPacket_retrasnmit->seqNum == *vector_sequence) {
+                        memcpy(resent_packate->payload, tempPacket_retrasnmit->payload, sizeof(tempPacket_retrasnmit->payload));
+                        break;
+                    }
                 }
                 
-                //then now start new time
+                
+                
+                if (sendto(sockfd, resent_packate, sizeof(*resent_packate), 0, (const struct sockaddr *) &clientaddr, clientlen) != -1)
+                {
+                    printf("Sending packet %d 5120 Retranmission\n", resent_packate->seqNum);
+                }
+                
+                //then now delete new time
                 vector_delete(&timing, j); //delete time
                 vector_delete((&timing), j); //delete sequence number
                 vector_delete(&timing, j); //delete ack number
                 
-                *current_time = sys_timestamp(); //get current time
+                long long time_one = sys_timestamp();
+                
+                //                *another_time = sys_timestamp(); //get current time
                 //now add sequence number and time
-                vector_add(&timing, current_time); //add current time
+                vector_add(&timing, &time_one); //add current time
                 vector_add(&timing, vector_sequence); //add sequence number
                 vector_add(&timing, vector_ackNum); //add ack number
+                
             }
+            //            sleep(1);
             
         }
         
+        
+        
+        
+        //        printf("WAITING for receive from ******\n");
+        thePoll[0].fd = sockfd;
+        thePoll[0].events = POLLIN;
         int r = poll(thePoll, 1, 500);
+        //        printf("waited for %d \n", r);
+        
         if (r > 0)
         {
             // If there is data to be read at the socket (the client has responded with an ACK)
@@ -206,12 +233,12 @@ int main(int argc, char **argv) {
                     // For every packet currently in the window...
                     for (int i = 0; i < cwnd.total; i++)
                     {
-                      
+                        
                         
                         TCP_Packet * tempPacket = malloc(sizeof(TCP_Packet));
                         tempPacket = vector_get(&cwnd, i);
                         
-                       
+                        
                         
                         
                         // We will check to see if the current packet is the one we have received from the client's ACK
@@ -269,10 +296,10 @@ int main(int argc, char **argv) {
                                 {
                                     printf("Sending packet %d 5120\n", packet->seqNum);
                                 }
-                            
+                                
                                 //after sending the package, restore the package for retramission
-                                *current_time = sys_timestamp(); //get current time
-                                vector_add(&timing, current_time);
+                                long long time_two = sys_timestamp();//get current time
+                                vector_add(&timing, &time_two);
                                 vector_add(&timing, &packet->seqNum);
                                 vector_add(&timing, &packet->ackNum);
                                 
@@ -288,5 +315,4 @@ int main(int argc, char **argv) {
     }
     
 }
-
 

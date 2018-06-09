@@ -56,8 +56,7 @@ int main(int argc, char **argv) {
     
     // Setting up the poll
     struct pollfd thePoll[1];
-    thePoll[0].fd = sockfd;
-    thePoll[0].events = POLLIN;
+    
     
     // Setting up the file buffer
     vector fileBuffer;
@@ -71,6 +70,9 @@ int main(int argc, char **argv) {
     // While there is still data to be received from the server...
     while(finish_file == 0)
     {
+        thePoll[0].fd = sockfd;
+        thePoll[0].events = POLLIN;
+        
         int r = poll(thePoll, 1, -1);
         if (r > 0)
         {
